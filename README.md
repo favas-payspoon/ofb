@@ -8,7 +8,6 @@ This is a [travel application](http://www.uaeexchangetravel.com/), which demonst
 With a pretty neat user interface, by the way.
 
 ![](https://github.com/fousu/ofb/blob/master/uib.png)
-![Piggy Metrics](https://github.com/fousu/ofb/blob/master/uib.png)
 
 ## Functional services
 
