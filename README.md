@@ -16,13 +16,13 @@ ofb was decomposed into three core microservices. All of them are independently 
 <img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Block%20diagram%202.png">
 <img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Block%20Diagram%203.png">
 
-#### Account service
-Contains general user input logic and validation: incomes/expenses items, savings and account settings.
+#### Flight sesrch service
+Contains general user input logic and validation: search airline, search with preferred airline.
 
 Method	| Path	| Description	| User authenticated	| Available from UI
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /accounts/{account}	| Get specified account data	|  | 	
-GET	| /accounts/current	| Get current account data	| × | ×
+GET	| /searchflight/{preferred airline}	| search with preferred airline	|  | 	
+GET	| /searchflight/current	| Get current account data	| × | ×
 GET	| /accounts/demo	| Get demo account data (pre-filled incomes/expenses items, etc)	|   | 	×
 PUT	| /accounts/current	| Save current account data	| × | ×
 POST	| /accounts/	| Register new account	|   | ×
@@ -49,7 +49,7 @@ PUT	| /notifications/settings/current	| Save current account notification settin
 
 #### Notes
 - Each microservice has it's own database, so there is no way to bypass API and access persistance data directly.
-- In this project, I use MongoDB as a primary database for each service. It might also make sense to have a polyglot persistence architecture (сhoose the type of db that is best suited to service requirements).
+- In this project, I use Mysql as a primary database for each service. It might also make sense to have a polyglot persistence architecture (сhoose the type of db that is best suited to service requirements).
 - Service-to-service communication is quite simplified: microservices talking using only synchronous REST API. Common practice in a real-world systems is to use combination of interaction styles. For example, perform synchronous GET request to retrieve data and use asynchronous approach via Message broker for create/update operations in order to decouple services and buffer messages. However, this brings us to the [eventual consistency](http://martinfowler.com/articles/microservice-trade-offs.html#consistency) world.
 
 ## Infrastructure services
