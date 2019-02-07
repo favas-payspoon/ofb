@@ -13,23 +13,25 @@ With a pretty neat user interface, by the way.
 
 ofb was decomposed into three core microservices. All of them are independently deployable applications, organized around certain business domains.
 
-<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Block%20diagram%202.png">
+<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Blockdiagram%203.png">
 
 
 #### Flight search service
 Contains general user input logic and validation: search airline, search with preferred airline.
 Flight search service is decomposes into four miceoservices.which will call the different airline providers.
-<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Block%20Diagram%203.png">
+
+<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/BD-Search%20.png">
+
+
 Method	| Path	| Description	| User authenticated	| Available from UI
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /searchflight/{preferred airline}	| search with preferred airline	|  | 	
-GET	| /searchflight/current	| Get current account data	| × | ×
-GET	| /accounts/demo	| Get demo account data (pre-filled incomes/expenses items, etc)	|   | 	×
-PUT	| /accounts/current	| Save current account data	| × | ×
-POST	| /accounts/	| Register new account	|   | ×
+GET	| /flightSearch/{airline}	| Get specified airline fare	          |  | 	
+GET	| /statistics/current	| Get current account statistics	| × | × 
+GET	| /statistics/demo	| Get demo account statistics	|   | × 
+PUT	| /statistics/{account}	| Create or update time series datapoint for specified account	|   | 
 
 
-#### Flight price service
+#### Flight book service
 Performs calculations on major statistics parameters and captures time series for each account. Datapoint contains values, normalized to base currency and time period. This data is used to track cash flow dynamics in account lifetime.
 
 Method	| Path	| Description	| User authenticated	| Available from UI
