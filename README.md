@@ -16,7 +16,7 @@ ofb was decomposed into three core microservices. All of them are independently 
 <img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Block%20diagram%202.png">
 <img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Block%20Diagram%203.png">
 
-#### Flight sesrch service
+#### Flight search service
 Contains general user input logic and validation: search airline, search with preferred airline.
 
 Method	| Path	| Description	| User authenticated	| Available from UI
@@ -28,7 +28,7 @@ PUT	| /accounts/current	| Save current account data	| × | ×
 POST	| /accounts/	| Register new account	|   | ×
 
 
-#### Statistics service
+#### Flight price service
 Performs calculations on major statistics parameters and captures time series for each account. Datapoint contains values, normalized to base currency and time period. This data is used to track cash flow dynamics in account lifetime.
 
 Method	| Path	| Description	| User authenticated	| Available from UI
@@ -39,7 +39,7 @@ GET	| /statistics/demo	| Get demo account statistics	|   | ×
 PUT	| /statistics/{account}	| Create or update time series datapoint for specified account	|   | 
 
 
-#### Notification service
+#### Flight book service
 Stores users contact information and notification settings (like remind and backup frequency). Scheduled worker collects required information from other services and sends e-mail messages to subscribed customers.
 
 Method	| Path	| Description	| User authenticated	| Available from UI
@@ -58,21 +58,10 @@ There's a bunch of common patterns in distributed systems, which could help us t
 ### Config service
 [Spring Cloud Config](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html) is horizontally scalable centralized configuration service for distributed systems. It uses a pluggable repository layer that currently supports local storage, Git, and Subversion. 
 
-In this project, I use `native profile`, which simply loads config files from the local classpath. You can see `shared` directory in [Config service resources](https://github.com/sqshq/PiggyMetrics/tree/master/config/src/main/resources). Now, when Notification-service requests it's configuration, Config service responses with `shared/notification-service.yml` and `shared/application.yml` (which is shared between all client applications).
+
 
 ##### Client side usage
-Just build Spring Boot application with `spring-cloud-starter-config` dependency, autoconfiguration will do the rest.
 
-Now you don't need any embedded properties in your application. Just provide `bootstrap.yml` with application name and Config service url:
-```yml
-spring:
-  application:
-    name: notification-service
-  cloud:
-    config:
-      uri: http://config:8888
-      fail-fast: true
-```
 
 ##### With Spring Cloud Config, you can change app configuration dynamically. 
 For example, [EmailService bean](https://github.com/sqshq/PiggyMetrics/blob/master/notification-service/src/main/java/com/piggymetrics/notification/service/EmailServiceImpl.java) was annotated with `@RefreshScope`. That means, you can change e-mail text and subject without rebuild and restart Notification service application.
@@ -90,21 +79,8 @@ Also, you could use Repository [webhooks to automate this process](http://cloud.
 ### Auth service
 Authorization responsibilities are completely extracted to separate server, which grants [OAuth2 tokens](https://tools.ietf.org/html/rfc6749) for the backend resource services. Auth Server is used for user authorization as well as for secure machine-to-machine communication inside a perimeter.
 
-In this project, I use [`Password credentials`](https://tools.ietf.org/html/rfc6749#section-4.3) grant type for users authorization (since it's used only by native PiggyMetrics UI) and [`Client Credentials`](https://tools.ietf.org/html/rfc6749#section-4.4) grant for microservices authorization.
 
-Spring Cloud Security provides convenient annotations and autoconfiguration to make this really easy to implement from both server and client side. You can learn more about it in [documentation](http://cloud.spring.io/spring-cloud-security/spring-cloud-security.html) and check configuration details in [Auth Server code](https://github.com/sqshq/PiggyMetrics/tree/master/auth-service/src/main/java/com/piggymetrics/auth).
 
-From the client side, everything works exactly the same as with traditional session-based authorization. You can retrieve `Principal` object from request, check user's roles and other stuff with expression-based access control and `@PreAuthorize` annotation.
-
-Each client in PiggyMetrics (account-service, statistics-service, notification-service and browser) has a scope: `server` for backend services, and `ui` - for the browser. So we can also protect controllers from external access, for example:
-
-``` java
-@PreAuthorize("#oauth2.hasScope('server')")
-@RequestMapping(value = "accounts/{name}", method = RequestMethod.GET)
-public List<DataPoint> getStatisticsByAccountName(@PathVariable String name) {
-	return statisticsService.findByAccountName(name);
-}
-```
 
 ### API Gateway
 As you can see, there are three core services, which expose external API to client. In a real-world systems, this number can grow very quickly as well as whole system complexity. Actually, hundreds of services might be involved in rendering of one complex webpage.
@@ -113,17 +89,7 @@ In theory, a client could make requests to each of the microservices directly. B
 
 Usually a much better approach is to use API Gateway. It is a single entry point into the system, used to handle requests by routing them to the appropriate backend service or by invoking multiple backend services and [aggregating the results](http://techblog.netflix.com/2013/01/optimizing-netflix-api.html). Also, it can be used for authentication, insights, stress and canary testing, service migration, static response handling, active traffic management.
 
-Netflix opensourced [such an edge service](http://techblog.netflix.com/2013/06/announcing-zuul-edge-service-in-cloud.html), and now with Spring Cloud we can enable it with one `@EnableZuulProxy` annotation. In this project, I use Zuul to store static content (ui application) and to route requests to appropriate microservices. Here's a simple prefix-based routing configuration for Notification service:
-
-```yml
-zuul:
-  routes:
-    notification-service:
-        path: /notifications/**
-        serviceId: notification-service
-        stripPrefix: false
-
-```
+Netflix opensourced [such an edge service](http://techblog.netflix.com/2013/06/announcing-zuul-edge-service-in-cloud.html), and now with Spring Cloud we can enable it with one `@EnableZuulProxy` annotation. In this project, I use Zuul to store static content (ui application) and to route requests to appropriate microservices. 
 
 That means all requests starting with `/notifications` will be routed to Notification service. There is no hardcoded address, as you can see. Zuul uses [Service discovery](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#service-discovery) mechanism to locate Notification service instances and also [Circuit Breaker and Load Balancer](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#http-client-load-balancer-and-circuit-breaker), described below.
 
@@ -135,12 +101,6 @@ The key part of Service discovery is Registry. I use Netflix Eureka in this proj
 
 With Spring Boot, you can easily build Eureka Registry with `spring-cloud-starter-eureka-server` dependency, `@EnableEurekaServer` annotation and simple configuration properties.
 
-Client support enabled with `@EnableDiscoveryClient` annotation an `bootstrap.yml` with application name:
-``` yml
-spring:
-  application:
-    name: notification-service
-```
 
 Now, on application startup, it will register with Eureka Server and provide meta-data, such as host and port, health indicator URL, home page etc. Eureka receives heartbeat messages from each instance belonging to a service. If the heartbeat fails over a configurable timetable, the instance will be removed from the registry.
 
@@ -153,29 +113,17 @@ Netflix OSS provides another great set of tools.
 #### Ribbon
 Ribbon is a client side load balancer which gives you a lot of control over the behaviour of HTTP and TCP clients. Compared to a traditional load balancer, there is no need in additional hop for every over-the-wire invocation - you can contact desired service directly.
 
-Out of the box, it natively integrates with Spring Cloud and Service Discovery. [Eureka Client](https://github.com/sqshq/PiggyMetrics#service-discovery) provides a dynamic list of available servers so Ribbon could balance between them.
+Out of the box, it natively integrates with Spring Cloud and Service Discovery. [Eureka Client] provides a dynamic list of available servers so Ribbon could balance between them.
 
 #### Hystrix
 Hystrix is the implementation of [Circuit Breaker pattern](http://martinfowler.com/bliki/CircuitBreaker.html), which gives a control over latency and failure from dependencies accessed over the network. The main idea is to stop cascading failures in a distributed environment with a large number of microservices. That helps to fail fast and recover as soon as possible - important aspects of fault-tolerant systems that self-heal.
 
 Besides circuit breaker control, with Hystrix you can add a fallback method that will be called to obtain a default value in case the main command fails.
 
-Moreover, Hystrix generates metrics on execution outcomes and latency for each command, that we can use to [monitor system behavior](https://github.com/sqshq/PiggyMetrics#monitor-dashboard).
+Moreover, Hystrix generates metrics on execution outcomes and latency for each command, that we can use to [monitor system behavior]
 
 #### Feign
 Feign is a declarative Http client, which seamlessly integrates with Ribbon and Hystrix. Actually, with one `spring-cloud-starter-feign` dependency and `@EnableFeignClients` annotation you have a full set of Load balancer, Circuit breaker and Http client with sensible ready-to-go default configuration.
-
-Here is an example from Account Service:
-
-``` java
-@FeignClient(name = "statistics-service")
-public interface StatisticsServiceClient {
-
-	@RequestMapping(method = RequestMethod.PUT, value = "/statistics/{accountName}", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	void updateStatistics(@PathVariable("accountName") String accountName, Account account);
-
-}
-```
 
 - Everything you need is just an interface
 - You can share `@RequestMapping` part between Spring MVC controller and Feign methods
@@ -242,18 +190,13 @@ In this [configuration](https://github.com/sqshq/PiggyMetrics/blob/master/.travi
 Keep in mind, that you are going to start 8 Spring Boot applications, 4 MongoDB instances and RabbitMq. Make sure you have `4 Gb` RAM available on your machine. You can always run just vital services though: Gateway, Registry, Config, Auth Service and Account Service.
 
 #### Before you start
-- Install Docker and Docker Compose.
-- Export environment variables: `CONFIG_SERVICE_PASSWORD`, `NOTIFICATION_SERVICE_PASSWORD`, `STATISTICS_SERVICE_PASSWORD`, `ACCOUNT_SERVICE_PASSWORD`, `MONGODB_PASSWORD` (make sure they were exported: `printenv`)
-- Make sure to build the project: `mvn package [-DskipTests]`
+
 
 #### Production mode
-In this mode, all latest images will be pulled from Docker Hub.
-Just copy `docker-compose.yml` and hit `docker-compose up`
+
 
 #### Development mode
-If you'd like to build images yourself (with some changes in the code, for example), you have to clone all repository and build artifacts with maven. Then, run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
 
-`docker-compose.dev.yml` inherits `docker-compose.yml` with additional possibility to build images locally and expose all containers ports for convenient development.
 
 #### Important endpoints
 - http://localhost:80 - Gateway
