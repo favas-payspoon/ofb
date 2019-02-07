@@ -42,7 +42,7 @@ GET	| /statistics/demo	| Get demo account statistics	|   | ×
 PUT	| /statistics/{account}	| Create or update time series datapoint for specified account	|   | 
 
 
-#### Flight book service
+#### Flight Ticket service
 Stores users contact information and notification settings (like remind and backup frequency). Scheduled worker collects required information from other services and sends e-mail messages to subscribed customers.
 
 Method	| Path	| Description	| User authenticated	| Available from UI
