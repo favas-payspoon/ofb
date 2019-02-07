@@ -14,11 +14,12 @@ With a pretty neat user interface, by the way.
 ofb was decomposed into three core microservices. All of them are independently deployable applications, organized around certain business domains.
 
 <img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Block%20diagram%202.png">
-<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Block%20Diagram%203.png">
+
 
 #### Flight search service
 Contains general user input logic and validation: search airline, search with preferred airline.
-
+Flight search service is decomposes into four miceoservices.which will call the different airline providers.
+<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Block%20Diagram%203.png">
 Method	| Path	| Description	| User authenticated	| Available from UI
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
 GET	| /searchflight/{preferred airline}	| search with preferred airline	|  | 	
