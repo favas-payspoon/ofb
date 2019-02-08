@@ -22,10 +22,10 @@ Contains general customer input logic and validation: customer signup and sigin.
 <img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/BD-Search%20.png">
 
 
-Method	| Path	| Description	| User authenticated	| Available from UI
-------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /customer/login/	| Get specified airline fare	          |  | 	
-POST	| /customer/register/	| Get current account statistics	| × | × 
+Method	| Path	| Description	| User authenticated	|
+------------- | ------------------------- | ------------- |:-------------:|
+GET	| /customer/login/	| Get specified airline fare	          | 	
+POST	| /customer/register/	| Get current account statistics	| × |
 
 #### Flight search service
 Contains general user input logic and validation: search airline, search with preferred airline.
