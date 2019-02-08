@@ -2,7 +2,7 @@
 
 # OFB
 
-**online flight booking api**
+****
 
 This is a [travel application](http://www.uaeexchangetravel.com/), which demonstrates [Microservice Architecture Pattern] using Spring Boot, Spring Cloud and Docker.
 With a pretty neat user interface, by the way.
