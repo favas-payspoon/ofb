@@ -7,19 +7,18 @@
 This is a [travel application](http://www.uaeexchangetravel.com/), which demonstrates [Microservice Architecture Pattern] using Spring Boot, Spring Cloud and Docker.
 With a pretty neat user interface, by the way.
 
-![](https://github.com/fousu/ofb/blob/master/uib.png)
+![](https://github.com/fousu/ofb/blob/master/Travelsite-revised-design-b%20(1).jpg)
 
 ## Functional services
 
 ofb was decomposed into three core microservices. All of them are independently deployable applications, organized around certain business domains.
 
-<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/Blockdiagram%203.png">
+<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/bd.png">
 
 #### Customer service
 Contains general customer input logic and validation: customer signup and sigin.
 
 
-<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/BD-Search%20.png">
 
 
 Method	| Path	| Description	| User authenticated	|
@@ -27,11 +26,11 @@ Method	| Path	| Description	| User authenticated	|
 GET	| /customer/login/	| Get specified airline fare	          | 	
 POST	| /customer/register/	| Get current account statistics	| × |
 
-#### Flight search service
-Contains general user input logic and validation: search airline, search with preferred airline.
+#### Flight search services
+Contains general user input logic and validation: search with preferred airline.
 Flight search service is decomposes into four miceoservices.which will call the different airline providers.
 
-<img width="880" alt="Functional services" src="https://github.com/fousu/ofb/blob/master/BD-Search%20.png">
+<img width="880" alt="Flight search service services" src="https://github.com/fousu/ofb/blob/master/search.png">
 
 
 Method	| Path	| Description	| User authenticated	| Available from UI
@@ -40,22 +39,17 @@ GET	| /flightSearch/{airline}	| Get specified airline fare	          |  |
 
 
 
-#### Flight book service
+#### Flight book and ticket services
 Performs calculations on major statistics parameters and captures time series for each account. Datapoint contains values, normalized to base currency and time period. This data is used to track cash flow dynamics in account lifetime.
+
+
+<img width="880" alt="Flight book services" src="https://github.com/fousu/ofb/blob/master/book.png">
 
 Method	| Path	| Description	| User authenticated	| Available from UI
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
 POST	| /flightBook/{airline}	| Get specified account statistics	          |  | 	
 
 
-
-#### Flight Ticket service
-Stores users contact information and notification settings (like remind and backup frequency). Scheduled worker collects required information from other services and sends e-mail messages to subscribed customers.
-
-Method	| Path	| Description	| User authenticated	| Available from UI
-------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /notifications/settings/current	| Get current account notification settings	| × | ×	
-PUT	| /notifications/settings/current	| Save current account notification settings	| × | ×
 
 #### Notes
 - Each microservice has it's own database connection, so there is no way to bypass API and access persistance data directly.
@@ -64,31 +58,21 @@ PUT	| /notifications/settings/current	| Save current account notification settin
 
 ## Infrastructure services
 There's a bunch of common patterns in distributed systems, which could help us to make described core services work. [Spring cloud](http://projects.spring.io/spring-cloud/) provides powerful tools that enhance Spring Boot applications behaviour to implement those patterns. I'll cover them briefly.
-<img width="880" alt="Infrastructure services" src="https://github.com/fousu/ofb/blob/master/arch.png">
+<img width="880" alt="Infrastructure services" src="https://github.com/fousu/ofb/blob/master/arch%20.png">
 ### Config service
-[Spring Cloud Config](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html) is horizontally scalable centralized configuration service for distributed systems. It uses a pluggable repository layer that currently supports local storage, Git, and Subversion. 
+[Spring Cloud Config](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html) is horizontally scalable centralized configuration service for distributed systems. It uses a pluggable repository layer that currently supports local storage, Git. 
 
 
 
-##### Client side usage
 
-
-##### With Spring Cloud Config, you can change app configuration dynamically. 
-For example, [EmailService bean](https://github.com/sqshq/PiggyMetrics/blob/master/notification-service/src/main/java/com/piggymetrics/notification/service/EmailServiceImpl.java) was annotated with `@RefreshScope`. That means, you can change e-mail text and subject without rebuild and restart Notification service application.
-
-First, change required properties in Config server. Then, perform refresh request to Notification service:
-`curl -H "Authorization: Bearer #token#" -XPOST http://127.0.0.1:8000/notifications/refresh`
-
-Also, you could use Repository [webhooks to automate this process](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_push_notifications_and_spring_cloud_bus)
-
-##### Notes
-- There are some limitations for dynamic refresh though. `@RefreshScope` doesn't work with `@Configuration` classes and doesn't affect `@Scheduled` methods
-- `fail-fast` property means that Spring Boot application will fail startup immediately, if it cannot connect to the Config Service.
-- There are significant [security notes](https://github.com/sqshq/PiggyMetrics#security) below
 
 ### Auth service
 Authorization responsibilities are completely extracted to separate server, which grants [OAuth2 tokens](https://tools.ietf.org/html/rfc6749) for the backend resource services. Auth Server is used for user authorization as well as for secure machine-to-machine communication inside a perimeter.
 
+
+Oauth2 is the preferred method of authenticating access to the API. Oauth2 allows authorization with clients id and cliet secret . clients gets a token that authorizes access to the user's account.
+
+<img width="880" alt="Infrastructure services" src="https://github.com/fousu/ofb/blob/master/arch%20.png">
 
 
 
