@@ -7,7 +7,7 @@
 This is a [travel application](http://www.uaeexchangetravel.com/), which demonstrates [Microservice Architecture Pattern] using Spring Boot, Spring Cloud and Docker.
 With a pretty neat user interface, by the way.
 
-![](https://github.com/fousu/ofb/blob/master/Travelsite-revised-design-b%20(1).jpg)
+
 
 ## Functional services
 
